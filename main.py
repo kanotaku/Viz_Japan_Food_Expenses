@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.express as px
 import requests
 import json
-import io
 import chardet
+from scipy.stats import pearsonr
 
 # 0️⃣ 画面設定
 st.set_page_config(page_title="都道府県別・食料品支出ダッシュボード", layout="wide")
@@ -230,8 +230,30 @@ def main():
                     st.plotly_chart(fig_scatter, use_container_width=True)
 
                     # 相関分析の説明を追加
-                    correlation = df[[x_axis, y_axis]].corr().iloc[0, 1]
-                    st.info(f"📊 **相関係数**: {correlation:.4f}")
+                    # 数値データのみを抽出して相関分析を行う
+                    numeric_df = df.copy()
+                    # 数値データ以外の行を削除
+                    numeric_df = numeric_df[pd.to_numeric(numeric_df[x_axis], errors='coerce').notna() & 
+                                           pd.to_numeric(numeric_df[y_axis], errors='coerce').notna()]
+                    
+                    if len(numeric_df) > 1:  # 相関分析には最低2つのデータポイントが必要
+                        # pearsonrを使用して相関係数とp値を計算
+                        r, p = pearsonr(numeric_df[x_axis].astype(float), numeric_df[y_axis].astype(float))
+                        st.info(f"📊 **相関係数 r = {r:.3f}, p値 = {p:.4g}**")
+                        
+                        # p値の解釈を追加
+                        if p < 0.01:
+                            st.success(f"🔍 p < 0.01: 非常に強い統計的有意性があります。この相関関係は偶然ではない可能性が高いです。")
+                        elif p < 0.05:
+                            st.success(f"🔍 p < 0.05: 統計的に有意な相関関係があります。")
+                        elif p < 0.1:
+                            st.info(f"🔍 p < 0.1: 弱い統計的有意性があります。より多くのデータで再検証すると良いでしょう。")
+                        else:
+                            st.warning(f"🔍 p > 0.1: 統計的に有意な相関関係があるとは言えません。この相関は偶然である可能性があります。")
+                        
+                        correlation = r  # 以降の判定に使用
+                    else:
+                        st.error("⚠️ 十分な数値データがないため、相関分析ができませんでした。")
 
                     if correlation > 0.7:
                         st.success(
