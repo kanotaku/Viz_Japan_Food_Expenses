@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import requests
 import json
-import io
 import chardet
 
 # 0️⃣ 画面設定
@@ -137,10 +136,11 @@ def main():
 
                 # 数値でない値（全国など）を除外
                 try:
-                    map_df = map_df[pd.to_numeric(map_df[category], errors='coerce').notna()]
+                    map_df = map_df[pd.to_numeric(map_df[category],
+                                                  errors='coerce').notna()]
                 except:
                     pass
-                
+
                 # GeoJSONのプロパティ名とデータフレームの都道府県名を一致させる
                 map_df = map_df.rename(columns={prefecture_col: "prefecture"})
 
@@ -150,7 +150,7 @@ def main():
                                         locations="prefecture",
                                         featureidkey="properties.nam_ja",
                                         color=category,
-                                        color_continuous_scale="Viridis",
+                                        color_continuous_scale="Plasma",
                                         scope="asia",
                                         labels={category: f"{category}支出額"},
                                         title=f"都道府県別・{category}支出マップ")
@@ -158,15 +158,15 @@ def main():
                 # 日本に焦点を当てる
                 fig_map.update_geos(fitbounds="locations",
                                     visible=False,
-                                    showcoastlines=True,
-                                    showland=True,
+                                    showcoastlines=False,
+                                    showland=False,
                                     showocean=True,
                                     oceancolor="LightBlue")
-                
+
                 # 地図のサイズを大きく設定
                 fig_map.update_layout(
                     height=700,  # 高さを大きく設定
-                    width=900,   # 幅を大きく設定
+                    width=900,  # 幅を大きく設定
                     margin=dict(l=0, r=0, t=30, b=0)  # マージンを小さく
                 )
 
@@ -208,36 +208,39 @@ def main():
                 if x_axis != y_axis:  # 異なるカテゴリが選択された場合のみ散布図を表示
                     # 散布図のデータ準備
                     scatter_df = df.copy()
-                    
+
                     # 数値データのみを抽出
                     try:
-                        scatter_df[x_axis] = pd.to_numeric(scatter_df[x_axis], errors='coerce')
-                        scatter_df[y_axis] = pd.to_numeric(scatter_df[y_axis], errors='coerce')
+                        scatter_df[x_axis] = pd.to_numeric(scatter_df[x_axis],
+                                                           errors='coerce')
+                        scatter_df[y_axis] = pd.to_numeric(scatter_df[y_axis],
+                                                           errors='coerce')
                         # NAを除外
                         scatter_df = scatter_df.dropna(subset=[x_axis, y_axis])
                     except:
                         pass
-                    
+
                     # 散布図の作成
-                    fig_scatter = px.scatter(scatter_df,
-                                             x=x_axis,
-                                             y=y_axis,
-                                             color=prefecture_col,
-                                             hover_name=prefecture_col,
-                                             title=f"{x_axis}と{y_axis}の相関分析",
-                                             labels={
-                                                 x_axis: f"{x_axis}",
-                                                 y_axis: f"{y_axis}"
-                                             },
-                                             size_max=15,
-                                             height=600,  # 高さを設定
-                                             width=800    # 幅を設定
-                                             )
+                    fig_scatter = px.scatter(
+                        scatter_df,
+                        x=x_axis,
+                        y=y_axis,
+                        color=prefecture_col,
+                        hover_name=prefecture_col,
+                        title=f"{x_axis}と{y_axis}の相関分析",
+                        labels={
+                            x_axis: f"{x_axis}",
+                            y_axis: f"{y_axis}"
+                        },
+                        size_max=15,
+                        height=600,  # 高さを設定
+                        width=800  # 幅を設定
+                    )
 
                     # 選択した都道府県をハイライト
                     if selected_prefs:
-                        highlight_df = scatter_df[scatter_df[prefecture_col].isin(
-                            selected_prefs)]
+                        highlight_df = scatter_df[
+                            scatter_df[prefecture_col].isin(selected_prefs)]
 
                         # 選択された都道府県のみマーカーサイズを大きくする
                         fig_scatter.update_traces(
@@ -247,7 +250,8 @@ def main():
                         # 選択された都道府県に注釈をつける
                         for idx, row in highlight_df.iterrows():
                             try:
-                                if pd.notna(row[x_axis]) and pd.notna(row[y_axis]):
+                                if pd.notna(row[x_axis]) and pd.notna(
+                                        row[y_axis]):
                                     fig_scatter.add_annotation(
                                         x=row[x_axis],
                                         y=row[y_axis],
@@ -256,7 +260,7 @@ def main():
                                         arrowhead=1,
                                         ax=0,
                                         ay=-40)
-                            except Exception as e:
+                            except Exception:
                                 pass  # 注釈の追加に失敗しても続行
 
                     st.plotly_chart(fig_scatter, use_container_width=True)
@@ -266,13 +270,17 @@ def main():
                         # 数値データのみを抽出して相関を計算
                         numeric_df = df.copy()
                         # 文字列などの非数値データを除外
-                        numeric_df[x_axis] = pd.to_numeric(numeric_df[x_axis], errors='coerce')
-                        numeric_df[y_axis] = pd.to_numeric(numeric_df[y_axis], errors='coerce')
+                        numeric_df[x_axis] = pd.to_numeric(numeric_df[x_axis],
+                                                           errors='coerce')
+                        numeric_df[y_axis] = pd.to_numeric(numeric_df[y_axis],
+                                                           errors='coerce')
                         # NAを除外
                         numeric_df = numeric_df.dropna(subset=[x_axis, y_axis])
-                        
+
                         if len(numeric_df) > 1:  # 2件以上のデータがある場合のみ相関を計算
-                            correlation = numeric_df[[x_axis, y_axis]].corr().iloc[0, 1]
+                            correlation = numeric_df[[x_axis,
+                                                      y_axis]].corr().iloc[0,
+                                                                           1]
                             st.info(f"📊 **相関係数**: {correlation:.4f}")
                         else:
                             st.warning("相関係数の計算に十分なデータがありません。")
