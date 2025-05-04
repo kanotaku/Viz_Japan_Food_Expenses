@@ -165,56 +165,57 @@ def main():
                                           ]].sort_values(by=category,
                                                          ascending=False),
                              use_container_width=True)
-                
+
                 # 6️⃣ 散布図表示機能
                 st.header("6. 2つのカテゴリの散布図分析")
-                
+
                 # 散布図用の2つのカテゴリ選択
-                columns_for_scatter = [col for col in df.columns if col != prefecture_col]
-                
+                columns_for_scatter = [
+                    col for col in df.columns if col != prefecture_col
+                ]
+
                 col1, col2 = st.columns(2)
-                
+
                 with col1:
-                    x_axis = st.selectbox(
-                        "X軸のカテゴリを選択してください",
-                        options=columns_for_scatter,
-                        index=0
-                    )
-                
+                    x_axis = st.selectbox("X軸のカテゴリを選択してください",
+                                          options=columns_for_scatter,
+                                          index=0)
+
                 with col2:
                     # X軸で選んだものと異なるカテゴリをデフォルトに
-                    remaining_cols = [col for col in columns_for_scatter if col != x_axis]
+                    remaining_cols = [
+                        col for col in columns_for_scatter if col != x_axis
+                    ]
                     default_y_index = 0 if remaining_cols else 0
-                    
-                    y_axis = st.selectbox(
-                        "Y軸のカテゴリを選択してください",
-                        options=remaining_cols,
-                        index=default_y_index
-                    )
-                
+
+                    y_axis = st.selectbox("Y軸のカテゴリを選択してください",
+                                          options=remaining_cols,
+                                          index=default_y_index)
+
                 if x_axis != y_axis:  # 異なるカテゴリが選択された場合のみ散布図を表示
                     # 散布図の作成
-                    fig_scatter = px.scatter(
-                        df,
-                        x=x_axis,
-                        y=y_axis,
-                        color=prefecture_col,
-                        hover_name=prefecture_col,
-                        title=f"{x_axis}と{y_axis}の相関分析",
-                        labels={x_axis: f"{x_axis}", y_axis: f"{y_axis}"},
-                        size_max=15
-                    )
-                    
+                    fig_scatter = px.scatter(df,
+                                             x=x_axis,
+                                             y=y_axis,
+                                             color=prefecture_col,
+                                             hover_name=prefecture_col,
+                                             title=f"{x_axis}と{y_axis}の相関分析",
+                                             labels={
+                                                 x_axis: f"{x_axis}",
+                                                 y_axis: f"{y_axis}"
+                                             },
+                                             size_max=15)
+
                     # 選択した都道府県をハイライト
                     if selected_prefs:
-                        highlight_df = df[df[prefecture_col].isin(selected_prefs)]
-                        
+                        highlight_df = df[df[prefecture_col].isin(
+                            selected_prefs)]
+
                         # 選択された都道府県のみマーカーサイズを大きくする
                         fig_scatter.update_traces(
                             marker=dict(size=15),
-                            selector=dict(mode='markers')
-                        )
-                        
+                            selector=dict(mode='markers'))
+
                         # 選択された都道府県に注釈をつける
                         for idx, row in highlight_df.iterrows():
                             fig_scatter.add_annotation(
@@ -224,17 +225,18 @@ def main():
                                 showarrow=True,
                                 arrowhead=1,
                                 ax=0,
-                                ay=-40
-                            )
-                    
+                                ay=-40)
+
                     st.plotly_chart(fig_scatter, use_container_width=True)
-                    
+
                     # 相関分析の説明を追加
                     correlation = df[[x_axis, y_axis]].corr().iloc[0, 1]
                     st.info(f"📊 **相関係数**: {correlation:.4f}")
-                    
+
                     if correlation > 0.7:
-                        st.success(f"✅ {x_axis}と{y_axis}には強い正の相関があります。一方が増加すると、もう一方も増加する傾向があります。")
+                        st.success(
+                            f"✅ {x_axis}と{y_axis}には強い正の相関があります。一方が増加すると、もう一方も増加する傾向があります。"
+                        )
                     elif correlation > 0.4:
                         st.success(f"✅ {x_axis}と{y_axis}には中程度の正の相関があります。")
                     elif correlation > 0:
@@ -244,7 +246,9 @@ def main():
                     elif correlation > -0.7:
                         st.warning(f"⚠️ {x_axis}と{y_axis}には中程度の負の相関があります。")
                     else:
-                        st.warning(f"⚠️ {x_axis}と{y_axis}には強い負の相関があります。一方が増加すると、もう一方は減少する傾向があります。")
+                        st.warning(
+                            f"⚠️ {x_axis}と{y_axis}には強い負の相関があります。一方が増加すると、もう一方は減少する傾向があります。"
+                        )
                 else:
                     st.warning("X軸とY軸に異なるカテゴリを選択してください。")
     else:
