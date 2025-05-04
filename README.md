@@ -31,7 +31,7 @@ $ pip install -r requirements.txt
 
 # 3. run
 $ streamlit run app.py
-# → ブラウザが http://localhost:8501 を開きます
+# → ブラウザが http://localhost:5000 を開きます
 ```
 
 ### Replit で動かす
