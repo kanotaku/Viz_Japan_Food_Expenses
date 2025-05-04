@@ -23,8 +23,8 @@
 
 ```bash
 # 1. clone
-$ git clone https://github.com/<your‑name>/pref-food-dashboard.git
-$ cd pref-food-dashboard
+$ git clone https://github.com/kanotaku/Viz_Japan_Food_Expenses.git
+$ cd Viz_Japan_Food_Expenses
 
 # 2. install  ※Python 3.9+
 $ pip install -r requirements.txt
